@@ -3,14 +3,17 @@ globals [
   lanes          ; a list of the y coordinates of different lanes
   road-ragers
   cops
+  driver-in-view
+
 ]
+
 
 turtles-own [
   speed         ; the current speed of the car
   top-speed     ; the maximum speed of the car (different for all cars)
   target-lane   ; the desired lane of the car
   patience      ; the driver's current level of patience
-  road-rager?  
+  road-rager?
   cop?
   encounters
   distance-traveled
@@ -21,6 +24,9 @@ turtles-own [
   done?
 ]
 
+patches-own
+[vision]
+
 to setup
   clear-all
   set-default-shape turtles "car"
@@ -30,6 +36,7 @@ to setup
   ask selected-car [ set color white ]
   select-cops
   select-road-rage-drivers
+
   ;finish-line
   reset-ticks
 end
@@ -56,7 +63,7 @@ end
 to select-cops
    let current-number 0
     loop [
-      if current-number > number-of-cops [ stop ]
+      if current-number = number-of-cops [ stop ]
       set cops one-of turtles
       ask cops [set color blue]
       ask cops [set cop? true]
@@ -68,22 +75,21 @@ end
 to select-road-rage-drivers
     let current-number 0
     loop [
-      if current-number > initial-number-of-road-rage-drivers [ stop ]
+      if current-number = initial-number-of-road-rage-drivers [ stop ]
       ;select "one-of? random turtle out of population
-      set road-ragers one-of turtles with [cop? = false] 
+      set road-ragers one-of turtles with [cop? = false]
       ask road-ragers [set color red]
       ask road-ragers [set speed .5 ]
       ask road-ragers [set top-speed .9]
       ask road-ragers [set road-rager? true]
       set current-number  current-number + 1
-    ] 
- 
+    ]
+
 end
-
-
 
 to road-rage
 
+  set patience 0
   set heading 90
   speed-up-car ; we tentatively speed up, but might have to slow down
   let blocking-cars other turtles in-cone (1 + speed) 180 with [ y-distance <= 1 ]
@@ -98,7 +104,7 @@ to road-rage
 
     choose-new-lane
 
-    if xcor - distance min-one-of blocking-cars  [distance myself] > 1 [set number-of-cars number-of-cars - 1 die]
+    ;if xcor - distance min-one-of blocking-cars  [distance myself] > 1 [set number-of-cars number-of-cars - 1 die]
 
   ]
 
@@ -134,7 +140,7 @@ to create-or-remove-cars
     set speed 0.5
     set distance-traveled 0
     set road-rager? false
-    set cop? false 
+    set cop? false
     set starting-point xcor
     set dead? false
     set done? false
@@ -206,6 +212,7 @@ to go
   ask turtles with [road-rager? = false] [ move-forward ]
   ask turtles with [road-rager?] [ road-rage ]
   ask turtles with [ ycor != target-lane ] [ move-to-target-lane ]
+  cop-vision
   tick
   if all? turtles [done?] [stop]
 end
@@ -221,7 +228,7 @@ to move-forward ; turtle procedure
     ; down so you are driving a bit slower than that car.
     set speed [ speed ] of blocking-car
     slow-down-car
-    if xcor - distance min-one-of blocking-cars  [distance myself] < 1 [set number-of-cars number-of-cars - 1 die]
+   ; if xcor - distance min-one-of blocking-cars  [distance myself] < 1 [set number-of-cars number-of-cars - 1 die]
   ]
   ask turtles with [speed > 0]
     [calculate-distance]
@@ -292,6 +299,23 @@ to check-for-crash
 
 end
 
+
+to cop-vision
+  draw-road
+ ; display cop vision
+  ask turtles with [cop? = true ]
+  [ ask patches in-cone 3 60
+   [ set pcolor red ]
+    let blocking-cars other turtles in-cone 3 60
+   ; (1 + speed) 180 with [ y-distance <= 3 ]
+    let blocking-car min-one-of blocking-cars [ distance myself ]
+    if blocking-car != nobody  [
+      ask blocking-car [set pcolor green]]
+  ]
+
+
+end
+
 to-report car-color
   ; give all cars a blueish color, but still make them distinguishable
   report one-of [ white ]
@@ -299,7 +323,7 @@ end
 
 to-report number-of-lanes
   ; To make the number of lanes easily adjustable, remove this
-  ; reporter and create a slider on the interface with the same
+  ; reporter and create222 a slider on the interface with the same
   ; name. 8 lanes is the maximum that currently fit in the view.
   report 3
 end
