@@ -4,7 +4,6 @@ globals [
   road-ragers
   cops
   driver-in-view
-
 ]
 
 
@@ -22,6 +21,7 @@ turtles-own [
   starting-point
   dead?
   done?
+  grudge
 ]
 
 patches-own
@@ -136,8 +136,8 @@ to create-or-remove-cars
     move-to one-of free road-patches
     set target-lane pycor
     set heading 90
-    set top-speed 0.5 + random-float 0.5
-    set speed 0.5
+    set top-speed 0.6 + random-float .3  ; random from 60 - 90mph
+    set speed 0.55 + random-float .1 ;55 + 0-10mph :55-65
     set distance-traveled 0
     set road-rager? false
     set cop? false
@@ -212,7 +212,7 @@ to go
   ask turtles with [road-rager? = false] [ move-forward ]
   ask turtles with [road-rager?] [ road-rage ]
   ask turtles with [ ycor != target-lane ] [ move-to-target-lane ]
-  cop-vision
+ ; cop-vision
   tick
   if all? turtles [done?] [stop]
 end
@@ -255,8 +255,8 @@ to choose-new-lane ; turtle procedure
     let min-dist min map [ y -> abs (y - ycor) ] other-lanes
     let closest-lanes filter [ y -> abs (y - ycor) = min-dist ] other-lanes
     set target-lane one-of closest-lanes
-    ask turtles with [road-rager? = false]
-    [set patience max-patience]
+    ;ask turtles with [road-rager? = false]
+ ;   [set patience max-patience]
   ]
 end
 
@@ -298,6 +298,14 @@ end
 to check-for-crash
 
 end
+
+
+to tit-for-tat
+end
+
+to risk-min
+end
+
 
 
 to cop-vision
